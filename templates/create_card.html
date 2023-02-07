@@ -1,0 +1,46 @@
+<!-- CreateCardModal -->
+
+        <div class="modal fade" id="CreateCardModal-{{list.list_id}}" data-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" 
+            aria-labelledby="CreateCardModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title">Create a Card</h5>
+                            <small>List Title : {{list.list_title}}</small>
+                        </div>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex flex-column">
+                            <form action="{{ url_for('add_card', list_id = list.list_id) }}" method="post" class="modal_form">
+
+                                <div class="form-group">
+                                    <label for="card_title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="card_title" name="card_title" placeholder="Name of the Card"
+                                        required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="card_content" class="form-label">Content</label>
+                                    <textarea class="form-control" id="card_content" name="card_content" rows="4" cols="20" 
+                                        placeholder="Card Content" required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="deadline" class="form-label">Deadline : </label>
+                                    <div style="display: inline-block;">
+                                        <input type="date" class="form-control" id="card_deadline" name="deadline" required>    
+                                    </div>
+                                </div>
+                                
+                                <div class="modal_btns">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal" aria-label="Close">Close</button>
+                                    <input type="submit" class="btn btn-outline-primary btn-sm btn-block btn-round" value="Submit">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>

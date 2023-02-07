@@ -1,0 +1,67 @@
+<!-- UpdateCardModal -->
+
+<div class="modal fade" id="UpdateCardModal-{{card.card_id}}" data-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" 
+aria-labelledby="UpdateCardModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h5 class="modal-title">Update Card</h5>
+                <small>Card Title : {{card.card_title}}</small>
+            </div>
+            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="d-flex flex-column">
+                <form action="{{ url_for('edit_card',list_id = list.list_id ,card_id = card.card_id) }}" method="post" class="modal_form">
+
+                    <div class="form-group">
+                        <label for="card_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="card_title" name="card_title" value="{{card.card_title}}"
+                            required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="card_content" class="form-label">Content</label>
+                        <textarea class="form-control" id="card_content" name="card_content" rows="4" cols="20" 
+                            required>{{card.card_content}}</textarea>
+                    </div>
+
+                    <div class="form-group my-2">
+                        <label for="userlists" class="form-label">List : </label>
+                        <div style="display: inline-block;">
+                            <select name="list_id" id="userlists" class="form-select mx-2" required>
+                                <option value="">Choose List</option>
+                                {% for temp_list in lists %}
+                                    <option value="{{ temp_list.list_id }}" {{ "selected" if(temp_list.list_id is sameas (list.list_id | int)) else "" }}>{{ temp_list.list_title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deadline" class="form-label">Deadline : </label>
+                        <div style="display: inline-block;">
+                            <input type="date" class="form-control" id="card_deadline-{{card.card_id}}" name="deadline" onchange="validateDate('{{card.card_id}}')" 
+                                value="{{card.deadline}}" required>    
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="completed_status" class="form-label">Mark as Complete :</label>
+                        <div class="form-check form-switch" style="display: inline-block;"> 
+                            <input type="checkbox" class="form-check-input" id="completed_status" name="completed_status" {{ "checked" if card_flags[card.card_id]['completed_flag'] else "unchecked" }} {{ "disabled" if card_flags[card.card_id]['deadline_flag'] else "" }}>
+                            <label class="form-check-label" for="completed_status"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal_btns">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal" aria-label="Close">Close</button>
+                        <input type="submit" class="btn btn-outline-primary btn-sm btn-block btn-round" value="Submit">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

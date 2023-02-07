@@ -1,0 +1,106 @@
+{% extends "header.html" -%}
+
+{% block title -%}
+    <title>Summary | {{ session['user'] }}</title>
+{% endblock -%}
+
+{% block style -%}  
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .btn:focus, .btn:active
+        {
+            outline: none !important;
+        }
+    </style>
+{% endblock -%}
+{% block content -%}
+<div class="container col-md-8" style="padding: 60px 0px">
+    <div class="card text-center">
+        <div class="card-header">
+            <div class="btn-group" role="group" aria-label="Basic outlined example">
+                <button type="button" class="btn btn-outline-dark shadow-none" id="bar">Bar Chart</button>
+                <button type="button" class="btn btn-outline-dark shadow-none" id="line">Line Chart</button>
+              </div>
+        </div>
+
+        <div class="card-body">
+            <div>
+                <canvas id="stackedbar"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let labels = JSON.parse( {{labels | tojson}} )
+    let data1 = JSON.parse( {{data1 | tojson}} )
+    let data0 = JSON.parse( {{data0 | tojson}} )
+
+    let line = document.getElementById('line');
+    let bar = document.getElementById('bar');
+
+    line.addEventListener('click', linechart)
+    bar.addEventListener('click', barchart)
+
+    const data = {
+        labels: labels,
+        datasets: [{
+        label: 'Completed',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgb(54, 162, 235)',
+        borderWidth: 4,
+        data: data1,
+        yAxisID: 'y'
+        },
+        {
+        label: 'Not completed',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 4,
+        data: data0,
+        yAxisID: 'y1'
+        }
+    ]};   
+
+    const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 2
+                        }
+                    },
+                    y1: {
+                        stacked: true,
+                        display: true,
+                        position: 'right',
+                        ticks: {
+                            stepSize: 2
+                        }
+                    }
+                }
+            },
+        
+        };
+    
+    
+    const myChart = new Chart(document.getElementById('stackedbar'), config);
+        
+    function barchart() {
+        myChart.config.type = 'bar';
+        myChart.update();
+    }
+    function linechart() {
+        myChart.config.type = 'line';
+        myChart.update();
+    }
+
+</script>
+{% endblock -%}

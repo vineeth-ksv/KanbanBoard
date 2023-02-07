@@ -1,0 +1,71 @@
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+main {
+    margin: 10px;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 10px;
+    background-color: whitesmoke;
+    height: 90px;
+    padding: 10px;
+}
+
+.app-name {
+    display: flex;
+    flex-direction: row;
+    cursor: default;
+}
+
+.kanban {
+    color: black;
+}
+
+.board {
+    color: coral;
+}
+
+.right-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.header-links a {
+    text-decoration: none;
+    font-size: 19px;
+    color: rgb(38, 110, 205);
+}
+
+
+/* Scrollbar CSS */
+/* width */
+::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+  }
+   
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: #888; 
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+  }

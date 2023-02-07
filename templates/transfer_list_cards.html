@@ -1,0 +1,38 @@
+<!-- TransferListCardsModal -->
+
+<div class="modal fade" id="TransferListCardsModal-{{list.list_id}}" data-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" 
+    aria-labelledby="TransferListCardsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">Transfer all cards to another list</h5>
+                    <small>List Title : {{list.list_title}}</small>
+                </div>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-column">
+                    <form action="{{ url_for('transfer_list_cards',list_id = list.list_id) }}" method="post" class="modal_form">
+                        
+                        <div class="form-group my-2">
+                            <label for="userlists" class="form-label">Select a list to transfer all cards:  </label>
+                            <select name="list_id" id="userlists" class="form-select" required>
+                                <option value="">Choose List</option>
+                                {% for temp_list in lists %}
+                                    <option value="{{ temp_list.list_id }}" {{ "selected" if(temp_list.list_id is sameas (list.list_id | int)) else "" }}>{{ temp_list.list_title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="modal_btns">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal" aria-label="Close">Close</button>
+                            <input type="submit" class="btn btn-outline-primary btn-sm btn-block btn-round" value="Submit">
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

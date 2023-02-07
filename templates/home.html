@@ -1,0 +1,91 @@
+{% extends "header.html" -%}
+
+{% block title -%}
+<title>Home | {{ session['user'] }}</title>
+{% endblock -%}
+
+{% block style -%}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='home.css') }}"/>
+    <script src="{{ url_for('static', filename='js/script_home.js') }}"></script>
+{% endblock -%}
+{% block script -%}
+<script>
+    let card_ids = JSON.parse('{{ card_ids }}');
+</script>
+{% endblock -%}
+
+{% block content -%}
+    {% if lists==[] -%}
+    <div class="empty_lists">
+        <p>There are no lists in the board</p>
+        <a data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"> Add a list</i></a>
+    </div>
+    {% else -%}
+        <div class="nesting-all-lists-container">
+            <div class="all-lists-container">
+                {% for list in lists %}
+                    <div class="lists-container">
+                        <div class="list-head">
+                            <div class="list-title">
+                                <label><b>{{ list.list_title }}</b></label>
+                            </div>
+                            <div class="list-btns">
+                                <a data-toggle="modal" data-target="#TransferListCardsModal-{{list.list_id}}">
+                                    <span><i class="fa fa-share-square-o"></i></span>
+                                </a>
+                                <a data-toggle="modal" data-target="#UpdateListModal-{{list.list_id}}">
+                                    <span><i class="fa fa-edit"></i></span>
+                                </a>
+                                <a href="javascript:;" onclick="listDeleteAlert('{{list.list_id}}')" class="delete-icon">
+                                    <span><i class="fa fa-trash-o"></i></span>
+                                </a>
+                            </div>
+                        </div>
+                        {% include 'update_list.html' -%}
+                        {% include 'transfer_list_cards.html' -%}
+                        <div class="user_cards">
+                            {% for card in cards_dict[list.list_id] -%}
+                            <div class="card">
+                                <div class="card_title">
+                                    <small>{{ card.card_title }}</small>
+                                    <div class="card_title_btn">
+                                        <button class="btn dropbtn" id="card-btn" onclick="showDropdown_cards('{{ card.card_id }}','{{ card_ids }}')">&#65049;</button>
+                                        <div id="myDropdown-c{{card.card_id}}" class="dropdown-content">
+                                            <a data-toggle="modal" data-target="#TransferCardModal-{{card.card_id}}">Move</a>
+                                            <a data-toggle="modal" data-target="#UpdateCardModal-{{card.card_id}}">Edit</a>
+                                            <a href="javascript:;" onclick="cardDeleteAlert('{{card.card_id}}')">Delete</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="card_content">{{ card.card_content }}</small>
+                                <small class="deadline_style" {% if deadline_color[card.card_id] is sameas "finished" %}style="color:green"{% elif deadline_color[card.card_id] is sameas "unfinished" %}style="color:red"{%endif%} >{{ card.deadline }}</small>
+                            </div>
+                            {% include 'update_card.html' -%}
+                            {% include 'transfer_card.html' -%}
+                            {% endfor %}
+                            <div class="add_card_btn {% if list.list_id not in cards_dict %}empty_list{% endif %}" >
+                                <a data-toggle="modal" data-target="#CreateCardModal-{{list.list_id}}"><i class="bi bi-plus-circle"></i></a>
+                            </div>
+                            {% include 'create_card.html' -%}
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="add_list_container">
+                    <div>
+                        <a class="add_list_btn" data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif -%}
+    {% include 'create_list.html' -%}
+{% endblock -%}
+
+{% block page_bottom_script -%}
+    <script src='https://code.jquery.com/jquery-3.3.1.slim.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js'></script>
+    <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js'></script>
+{% endblock -%}
