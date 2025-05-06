@@ -1,4 +1,4 @@
-{% extends "header.html" -%}
+{% extends "header.html" %}
 
 {% block title -%}
 <title>Home | {{ session['user'] }}</title>
@@ -11,11 +11,24 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='home.css') }}"/>
     <script src="{{ url_for('static', filename='js/script_home.js') }}"></script>
 {% endblock -%}
+
 {% block script -%}
+
+<script type="application/json" id="card-ids-data">
+    {{ card_ids | tojson }}
+</script>
+
 <script>
-    let card_ids = JSON.parse('{{ card_ids }}');
+    // Initialize card_ids and pass it to JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        const dataElement = document.getElementById('card-ids-data');
+        const ids = JSON.parse(dataElement.textContent);
+        initCardIds(ids);
+    });
+
+    
     function listDeleteAlert(list_id) {
-        swal.fire({
+        Swal.fire({
             title: "Are you sure?",
             text: "The list and all the cards in the list will also be deleted!",
             icon: "warning",
@@ -30,7 +43,7 @@
     }
 
     function cardDeleteAlert(card_id) {
-        swal.fire({
+        Swal.fire({
             title: "Are you sure?",
             text: "Once deleted, you will not be able to recover the card details!",
             icon: "warning",
@@ -47,74 +60,298 @@
 {% endblock -%}
 
 {% block content -%}
-    {% if lists==[] -%}
-    <div class="empty_lists">
-        <p>There are no lists in the board</p>
-        <a data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"> Add a list</i></a>
+    <!-- View Selection Buttons -->
+    <div class="row mb-3">
+        <div class="col-11 d-flex justify-content-end align-items-center">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('home', view_type='status') }}" 
+                class="btn custom-btn {% if view_type == 'status' %}active{% endif %}">
+                Status View
+                </a>
+                <a href="{{ url_for('home', view_type='category') }}" 
+                class="btn custom-btn {% if view_type == 'category' %}active{% endif %}">
+                Category View
+                </a>
+            </div>
+        </div>
     </div>
-    {% else -%}
-        <div class="nesting-all-lists-container">
-            <div class="all-lists-container">
-                {% for list in lists %}
-                    <div class="lists-container">
-                        <div class="list-head">
-                            <div class="list-title">
-                                <label><b>{{ list.list_title }}</b></label>
+
+    <!-- CATEGORY VIEW -->
+    {% if view_type == 'category' %}
+        {% if lists==[] -%}
+        <div class="empty_lists">
+            <p>There are no lists in the board</p>
+            <a data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"> Add a list</i></a>
+        </div>
+        {% else -%}
+            <div class="nesting-all-lists-container">
+                <div class="all-lists-container">
+                    {% for list in lists %}
+                        <div class="lists-container">
+                            <div class="list-head">
+                                <div class="list-title">
+                                    <label><b>{{ list.list_title }}</b></label>
+                                </div>
+                                <div class="list-btns">
+                                    <a data-toggle="modal" data-target="#TransferListCardsModal-{{list.list_id}}">
+                                        <span><i class="fa fa-share-square-o"></i></span>
+                                    </a>
+                                    <a data-toggle="modal" data-target="#UpdateListModal-{{list.list_id}}">
+                                        <span><i class="fa fa-edit"></i></span>
+                                    </a>
+                                    <a href="javascript:;" onclick="listDeleteAlert('{{list.list_id}}')" class="delete-icon">
+                                        <span><i class="fa fa-trash-o"></i></span>
+                                    </a>
+                                </div>
                             </div>
-                            <div class="list-btns">
-                                <a data-toggle="modal" data-target="#TransferListCardsModal-{{list.list_id}}">
-                                    <span><i class="fa fa-share-square-o"></i></span>
-                                </a>
-                                <a data-toggle="modal" data-target="#UpdateListModal-{{list.list_id}}">
-                                    <span><i class="fa fa-edit"></i></span>
-                                </a>
-                                <a href="javascript:;" onclick="listDeleteAlert('{{list.list_id}}')" class="delete-icon">
-                                    <span><i class="fa fa-trash-o"></i></span>
-                                </a>
-                            </div>
-                        </div>
-                        {% include 'update_list.html' -%}
-                        {% include 'transfer_list_cards.html' -%}
-                        <div class="user_cards">
-                            {% for card in cards_dict[list.list_id] -%}
-                            <div class="card">
-                                <div class="card_title">
-                                    <small>{{ card.card_title }}</small>
-                                    <div class="card_title_btn">
-                                        <button class="btn dropbtn" id="card-btn" onclick="showDropdown_cards('{{ card.card_id }}','{{ card_ids }}')">&#65049;</button>
-                                        <div id="myDropdown-c{{card.card_id}}" class="dropdown-content">
-                                            <a data-toggle="modal" data-target="#TransferCardModal-{{card.card_id}}">Move</a>
-                                            <a data-toggle="modal" data-target="#UpdateCardModal-{{card.card_id}}">Edit</a>
-                                            <a href="javascript:;" onclick="cardDeleteAlert('{{card.card_id}}')">Delete</a>
+                            {% include 'update_list.html' -%}
+                            {% include 'transfer_list_cards.html' -%}
+                            <div class="user_cards">
+                                {% for card in cards_dict[list.list_id] -%}
+                                <div class="card">
+                                    <div class="card_title">
+                                        <small>{{ card.card_title }}</small>
+                                        <div class="card_title_btn">
+                                            <button class="btn dropbtn" id="card-btn" onclick="showDropdown_cards('{{ card.card_id }}')">&#65049;</button>
+                                            <div id="myDropdown-c{{card.card_id}}" class="dropdown-content">
+                                                <a data-toggle="modal" data-target="#TransferCardModal-{{card.card_id}}">Move</a>
+                                                <a data-toggle="modal" data-target="#UpdateCardModal-{{card.card_id}}">Edit</a>
+                                                <a href="javascript:;" onclick="cardDeleteAlert('{{card.card_id}}')">Delete</a>
+                                            </div>
                                         </div>
                                     </div>
+                                    <small class="card_content">{{ card.card_content }}</small>
+                                    <small class="deadline_style" {% if deadline_color[card.card_id] is sameas "finished" %}style="color:green"{% elif deadline_color[card.card_id] is sameas "unfinished" %}style="color:red"{%endif%} >{{ card.deadline }}</small>
                                 </div>
-                                <small class="card_content">{{ card.card_content }}</small>
-                                <small class="deadline_style" {% if deadline_color[card.card_id] is sameas "finished" %}style="color:green"{% elif deadline_color[card.card_id] is sameas "unfinished" %}style="color:red"{%endif%} >{{ card.deadline }}</small>
+                                {% include 'update_card.html' -%}
+                                {% include 'transfer_card.html' -%}
+                                {% endfor %}
+                                <div class="add_card_btn {% if list.list_id not in cards_dict %}empty_list{% endif %}" >
+                                    <a data-toggle="modal" data-target="#CreateCardModal-{{list.list_id}}"><i class="bi bi-plus-circle"></i></a>
+                                </div>
+                                {% include 'create_card.html' -%}
                             </div>
-                            {% include 'update_card.html' -%}
-                            {% include 'transfer_card.html' -%}
-                            {% endfor %}
-                            <div class="add_card_btn {% if list.list_id not in cards_dict %}empty_list{% endif %}" >
-                                <a data-toggle="modal" data-target="#CreateCardModal-{{list.list_id}}"><i class="bi bi-plus-circle"></i></a>
-                            </div>
-                            {% include 'create_card.html' -%}
                         </div>
-                    </div>
-                {% endfor %}
-                <div class="add_list_container">
-                    <div>
-                        <a class="add_list_btn" data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"></i></a>
+                    {% endfor %}
+                    <div class="add_list_container">
+                        <div>
+                            <a class="add_list_btn" data-toggle="modal" data-target="#CreateListModal"><i class="bi bi-plus-circle"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>
+        {% endif -%}
+        {% include 'create_list.html' -%}
+    
+    <!-- STATUS VIEW -->
+    {% else %}
+        <div class="container-fluid all-status-container">
+            <div class="row">
+                <!-- Status Columns -->
+                {% for status, cards in status_columns.items() %}
+                <div class="col-md-4">
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                {{ status }}
+                                <span class="badge bg-secondary">{{ cards|length }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body kanban-column">
+                            {% if cards %}
+                                {% for card in cards %}
+                                <div class="card mb-3 {% if card_flags[card.card_id]['deadline_flag'] %}border-danger{% endif %}">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ card.card_title }}</h6>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary" type="button" id="actionDropdown{{ card.card_id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ card.card_id }}">
+                                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCardModal{{ card.card_id }}">Edit</a></li>
+                                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#transferCardModal{{ card.card_id }}">Move to list</a></li>
+                                                <li><a class="dropdown-item" href="javascript:;" onclick="cardDeleteAlert('{{card.card_id}}')">Delete</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">{{ card.card_content }}</p>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">List: {{ lists|selectattr('list_id', 'equalto', card.list_id)|first|attr('list_title') }}</small>
+                                            <small class="{% if card_flags[card.card_id]['deadline_flag'] %}text-danger{% else %}text-muted{% endif %}">
+                                                Due: {{ card.deadline.strftime('%Y-%m-%d') if card.deadline is not string else card.deadline }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Edit Card Modal -->
+                                <div class="modal fade" id="editCardModal{{ card.card_id }}" tabindex="-1" aria-labelledby="editCardModalLabel{{ card.card_id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editCardModalLabel{{ card.card_id }}">Edit Card</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ url_for('edit_card', list_id=card.list_id, card_id=card.card_id) }}" method="POST">
+                                                    <input type="hidden" name="view_type" value="{{ view_type }}">
+                                                    <div class="mb-3">
+                                                        <label for="card_title" class="form-label">Card Title</label>
+                                                        <input type="text" class="form-control" id="card_title" name="card_title" value="{{ card.card_title }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="card_content" class="form-label">Card Content</label>
+                                                        <textarea class="form-control" id="card_content" name="card_content" rows="3" required>{{ card.card_content }}</textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="list_id" class="form-label">List</label>
+                                                        <select class="form-select" id="list_id" name="list_id" required>
+                                                            {% for list in lists %}
+                                                            <option value="{{ list.list_id }}" {% if list.list_id == card.list_id %}selected{% endif %}>{{ list.list_title }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="status" class="form-label">Status</label>
+                                                        <select class="form-select" id="status" name="status" required>
+                                                            <option value="Not Started" {% if card.status == "Not Started" %}selected{% endif %}>Not Started</option>
+                                                            <option value="In-Progress" {% if card.status == "In-Progress" %}selected{% endif %}>In-Progress</option>
+                                                            <option value="Completed" {% if card.status == "Completed" %}selected{% endif %}>Completed</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="deadline" class="form-label">Deadline</label>
+                                                        <input type="date" class="form-control" id="deadline" name="deadline" value="{{ card.deadline.strftime('%Y-%m-%d') if card.deadline is not string else card.deadline }}" required>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Save changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Transfer Card Modal -->
+                                <div class="modal fade" id="transferCardModal{{ card.card_id }}" tabindex="-1" aria-labelledby="transferCardModalLabel{{ card.card_id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="transferCardModalLabel{{ card.card_id }}">Transfer Card</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ url_for('transfer_card', card_id=card.card_id) }}" method="POST">
+                                                    <input type="hidden" name="view_type" value="{{ view_type }}">
+                                                    <div class="mb-3">
+                                                        <label for="list_id" class="form-label">Select List</label>
+                                                        <select class="form-select" id="list_id" name="list_id" required>
+                                                            {% for list in lists %}
+                                                            <option value="{{ list.list_id }}" {% if list.list_id == card.list_id %}selected{% endif %}>{{ list.list_title }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Transfer</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center my-3">No cards in this status</p>
+                            {% endif %}
+                            
+                            <!-- Add Card Button -->
+                            <button class="btn btn-outline-primary w-100 mt-2" data-bs-toggle="modal" data-bs-target="#addCardModal{{ status|replace(' ', '') }}">
+                                <i class="bi bi-plus"></i> Add Card
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Add Card Modal for each status -->
+                <div class="modal fade" id="addCardModal{{ status|replace(' ', '') }}" tabindex="-1" aria-labelledby="addCardModalLabel{{ status|replace(' ', '') }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addCardModalLabel{{ status|replace(' ', '') }}">Add New Card with {{ status }} Status</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="{{ url_for('add_card_with_status') }}" method="POST">
+                                    <input type="hidden" name="view_type" value="{{ view_type }}">
+                                    <input type="hidden" name="status" value="{{ status }}">
+                                    <div class="mb-3">
+                                        <label for="card_title" class="form-label">Card Title</label>
+                                        <input type="text" class="form-control" id="card_title" name="card_title" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="card_content" class="form-label">Card Content</label>
+                                        <textarea class="form-control" id="card_content" name="card_content" rows="3" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="list_id" class="form-label">List</label>
+                                        <select class="form-select" id="list_id" name="list_id" required>
+                                            {% for list in lists %}
+                                            <option value="{{ list.list_id }}">{{ list.list_title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="deadline" class="form-label">Deadline</label>
+                                        <input type="date" class="form-control" id="deadline" name="deadline" required>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Add Card</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-    {% endif -%}
-    {% include 'create_list.html' -%}
+    {% endif %}
 {% endblock -%}
 
 {% block page_bottom_script -%}
-    <script src='https://code.jquery.com/jquery-3.3.1.slim.min.js'></script>
+    <!-- Include both jQuery and Bootstrap libraries -->
+    <script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js'></script>
+    <!-- Bootstrap 4 JS for older components -->
     <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js'></script>
+    <!-- Bootstrap 5 JS for status view components -->
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js'></script>
+    
+    <script>
+        // Initialize all components after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bootstrap 5 specific - initialize any components not initialized yet
+            if (typeof bootstrap !== 'undefined') {
+                // Initialize dropdowns for status view
+                var dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+                dropdowns.forEach(function(dropdown) {
+                    new bootstrap.Dropdown(dropdown);
+                });
+                
+                // Initialize modals that use Bootstrap 5
+                var modals = document.querySelectorAll('[data-bs-toggle="modal"]');
+                modals.forEach(function(modal) {
+                    var targetId = modal.getAttribute('data-bs-target').replace('#', '');
+                    var modalElement = document.getElementById(targetId);
+                    if (modalElement) {
+                        new bootstrap.Modal(modalElement);
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock -%}

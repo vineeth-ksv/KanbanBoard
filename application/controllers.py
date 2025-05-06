@@ -77,40 +77,78 @@ def register():
             return redirect(url_for("home"))
 
 @app.route("/home")
-def home():
+@app.route("/home/<view_type>")
+def home(view_type="status"):
     if 'user' not in session:
         flash('Session expired. Please login again..', "warning")
         return redirect(url_for('login'))
 
-    user = User.query.filter_by(user_id = session['user_id']).first()
+    user = User.query.filter_by(user_id=session['user_id']).first()
     lists = user.lists
-    list_ids = []
-    card_ids = []
-    deadline_color = {}
-    cards_dict = {}
     card_flags = {}
-    for list in lists:
-        list_ids.append(list.list_id)
-        cards = list.cards
-        for card in cards:
+    card_ids = []
+
+    # Get all card IDs for JS dropdown functionality
+    for list_obj in lists:
+        for card in list_obj.cards:
             card_ids.append(card.card_id)
-            deadline_color[card.card_id] = check_deadline(card.deadline, card.completed_status)
 
-            if(card.completed_status):
-                completed_Flag = True
-            else:
-                completed_Flag = False
+    if view_type == "category":
+        list_ids = []
+        cards_dict = {}
+        deadline_color = {}
+        
+        for list_obj in lists:
+            list_ids.append(list_obj.list_id)
+            cards = list_obj.cards
+            for card in cards:
+                deadline_color[card.card_id] = "finished" if card.is_completed else "unfinished" if card.is_overdue else ""
+                card_flags[card.card_id] = {
+                    "completed_flag": card.is_completed,
+                    "deadline_flag": card.is_overdue
+                }
+            if cards:
+                cards_dict[list_obj.list_id] = cards
+    else:  # status view
+        not_started_cards = []
+        in_progress_cards = []
+        completed_cards = []
 
-            deadline_flag = False
+        for list_obj in lists:
+            for card in list_obj.cards:
+                if card.status == "Not Started":
+                    not_started_cards.append(card)
+                elif card.status == "In-Progress":
+                    in_progress_cards.append(card)
+                elif card.status == "Completed":
+                    completed_cards.append(card)
+                
+                card_flags[card.card_id] = {
+                    "completed_flag": card.is_completed,
+                    "deadline_flag": card.is_overdue
+                }
+        
+        status_columns = {
+            "Not Started": not_started_cards,
+            "In-Progress": in_progress_cards,
+            "Completed": completed_cards
+        }
+    
+    # Common template for both views
+    return render_template(
+        'home.html',
+        lists=lists,
+        cards_dict=cards_dict if view_type == "category" else {},
+        list_ids=list_ids if view_type == "category" else [],
+        deadline_color=deadline_color if view_type == "category" else {},
+        status_columns=status_columns if view_type == "status" else {},
+        card_flags=card_flags,
+        view_type=view_type,
+        card_ids=card_ids,
+        page='home'
+    )
 
-            if not completed_Flag:
-                if int((card.deadline - date.today()).total_seconds()) < 0:
-                    deadline_flag = True
-            card_flags[card.card_id] = { "completed_flag": completed_Flag, "deadline_flag": deadline_flag }
-        if cards != []:
-            cards_dict[list.list_id] = cards
-    return render_template('home.html', lists = lists, cards_dict = cards_dict, list_ids = list_ids, 
-                                        card_ids = card_ids, deadline_color = deadline_color, card_flags = card_flags, page='home')
+
 
 @app.route('/add_list', methods=['POST'])
 def add_list():
@@ -262,6 +300,49 @@ def add_card(list_id):
         finally:
             return redirect(url_for('home'))
 
+@app.route('/add_card_with_status', methods=['POST'])
+def add_card_with_status():
+    if 'user' not in session:
+        flash('Session expired. Please login again..', "warning")
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        list_id = request.form['list_id']
+        card_title = request.form['card_title']
+        card_content = request.form['card_content']
+        status = request.form['status']
+        input_deadline = request.form.get('deadline')
+        deadline = (datetime.datetime.strptime(input_deadline, '%Y-%m-%d')).date()
+        created_date = date.today()
+        view_type = request.form.get('view_type', 'status')
+
+        try:
+            # Set completed_date if status is Completed
+            completed_date = date.today() if status == "Completed" else None
+            
+            card = Cards(
+                list_id=list_id, 
+                card_title=card_title, 
+                card_content=card_content,
+                status=status,
+                deadline=deadline, 
+                created_date=created_date, 
+                updated_date=created_date,
+                completed_date=completed_date
+            )
+            db.session.add(card)
+            db.session.commit()
+        
+        except Exception as e:
+            db.session.rollback()
+            flash('Oops..! Something went wrong.', 'danger')
+        
+        else:
+            flash('Card created successfully..', 'success')
+
+        finally:
+            return redirect(url_for('home', view_type=view_type))
+
 @app.route('/edit_card/<list_id>/<card_id>', methods=['POST'])
 def edit_card(list_id, card_id):
     if 'user' not in session:
@@ -284,11 +365,16 @@ def edit_card(list_id, card_id):
             input_deadline = request.form['deadline']
             user_card.deadline = (datetime.datetime.strptime(input_deadline, '%Y-%m-%d')).date()
             user_card.updated_date = date.today()
-            if(request.form.get('completed_status')):
-                user_card.completed_status = True
+            
+            # Update the status field
+            previous_status = user_card.status
+            user_card.status = request.form['status']
+            
+            # Set completed_date if status changed to Completed
+            if user_card.status == "Completed" and previous_status != "Completed":
                 user_card.completed_date = date.today()
-            else:
-                user_card.completed_status = False
+            elif user_card.status != "Completed":
+                user_card.completed_date = None
             
             db.session.commit()
         
@@ -300,7 +386,8 @@ def edit_card(list_id, card_id):
             flash('Card updated successfully..', 'success')
 
         finally:
-            return redirect(url_for('home'))
+            view_type = request.form.get('view_type', 'status')
+            return redirect(url_for('home', view_type=view_type))
 
 @app.route('/delete_card/<card_id>')
 def delete_card(card_id):
@@ -365,19 +452,29 @@ def summary():
 
     if request.method == 'GET':
         user = User.query.filter_by(user_id = session['user_id']).first()
-        (labels, data1, data0) = ([], [], [])
+        (labels, no_of_completed, no_of_in_progress, no_of_not_started) = ([], [], [], [])
         for list in user.lists:
             labels.append(list.list_title)
-            temp1 = 0
-            temp0 = 0
+            not_started, in_progress, completed = 0, 0, 0
             for card in list.cards:
-                if card.completed_status == True:
-                    temp1 += 1
-                else:
-                    temp0 += 1
-            data1.append(temp1)
-            data0.append(temp0)
-        return render_template('summary.html', user = user, labels = json.dumps(labels), data1 = json.dumps(data1), data0 = json.dumps(data0), page='summary')        
+                if card.is_completed:
+                    completed += 1
+                elif card.is_in_progress:
+                    in_progress += 1
+                elif card.is_not_started:
+                    not_started += 1
+            no_of_completed.append(completed)
+            no_of_in_progress.append(in_progress)
+            no_of_not_started.append(not_started)
+        return render_template(
+            'summary.html', 
+            user = user, 
+            labels = json.dumps(labels), 
+            no_of_completed = json.dumps(no_of_completed), 
+            no_of_in_progress = json.dumps(no_of_in_progress),
+            no_of_not_started = json.dumps(no_of_not_started),
+            page='summary'
+        )        
 
 @app.route("/logout")
 def logout():
