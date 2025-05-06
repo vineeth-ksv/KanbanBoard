@@ -44,7 +44,8 @@ def login():
             if user.password == password:
                 session['user'] = username
                 session['user_id'] = user.user_id
-                return redirect(url_for('home'))
+                session['view_type'] = 'status'
+                return redirect(url_for('home', view_type=session['view_type']))
             else:
                 flash("Invalid password..!", "danger")
                 return redirect(url_for('index'))
@@ -74,11 +75,12 @@ def register():
             user = User.query.filter_by(username = username).first()
             session['user'] = username
             session['user_id'] = user.user_id
-            return redirect(url_for("home"))
+            session['view_type'] = 'status'
+            return redirect(url_for("home", view_type=session['view_type']))
 
-@app.route("/home")
 @app.route("/home/<view_type>")
 def home(view_type="status"):
+    session['view_type'] = view_type
     if 'user' not in session:
         flash('Session expired. Please login again..', "warning")
         return redirect(url_for('login'))
@@ -176,7 +178,7 @@ def add_list():
             flash('List created successfully..', 'success')
         
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/edit_list/<list_id>', methods=['POST'])
 def edit_list(list_id):
@@ -207,7 +209,7 @@ def edit_list(list_id):
             flash('List updated successfully..', 'success')
         
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/delete_list/<list_id>')
 def delete_list(list_id):
@@ -231,7 +233,7 @@ def delete_list(list_id):
             flash('List deleted successfully..', 'success')
 
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/transfer_list_cards/<list_id>', methods=['POST'])
 def transfer_list_cards(list_id):
@@ -265,7 +267,7 @@ def transfer_list_cards(list_id):
             flash('All Cards transfered to another list successfully..', 'success')
         
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 
 @app.route('/add_card/<list_id>', methods=['POST'])
@@ -298,7 +300,7 @@ def add_card(list_id):
             flash('Card created successfully..', 'success')
 
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/add_card_with_status', methods=['POST'])
 def add_card_with_status():
@@ -412,7 +414,7 @@ def delete_card(card_id):
             flash('Card deleted successfully..', 'success')
 
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/transfer_card/<card_id>', methods=['POST'])
 def transfer_card(card_id):
@@ -442,7 +444,7 @@ def transfer_card(card_id):
             flash('Card transfered successfully..', 'success')
 
         finally:
-            return redirect(url_for('home'))
+            return redirect(url_for('home', view_type=session['view_type']))
 
 @app.route('/summary')
 def summary():
