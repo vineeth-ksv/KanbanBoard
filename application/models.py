@@ -23,14 +23,14 @@ class Cards(db.Model):
     card_title = db.Column(db.String, nullable = False)
     card_content = db.Column(db.String(100), nullable=False)
     deadline = db.Column(db.Date, nullable = False)
-    status = db.Column(db.String, nullable = False, default = "Not Started") # Not Started, In-Progress, Completed
+    status = db.Column(db.String, nullable = False, default = "To-Do") # To-Do, In-Progress, Completed
     created_date = db.Column(db.Date, nullable = False)
     updated_date = db.Column(db.Date, nullable = False)
     completed_date = db.Column(db.Date, nullable = True)
     
     @property
     def is_not_started(self):
-        return self.status == "Not Started"
+        return self.status == "To-Do"
 
     @property
     def is_in_progress(self):

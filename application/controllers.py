@@ -118,7 +118,7 @@ def home(view_type="status"):
 
         for list_obj in lists:
             for card in list_obj.cards:
-                if card.status == "Not Started":
+                if card.status == "To-Do":
                     not_started_cards.append(card)
                 elif card.status == "In-Progress":
                     in_progress_cards.append(card)
@@ -131,7 +131,7 @@ def home(view_type="status"):
                 }
         
         status_columns = {
-            "Not Started": not_started_cards,
+            "To-Do": not_started_cards,
             "In-Progress": in_progress_cards,
             "Completed": completed_cards
         }

@@ -215,7 +215,7 @@
                                                     <div class="mb-3">
                                                         <label for="status" class="form-label">Status</label>
                                                         <select class="form-select" id="status" name="status" required>
-                                                            <option value="Not Started" {% if card.status == "Not Started" %}selected{% endif %}>Not Started</option>
+                                                            <option value="To-Do" {% if card.status == "To-Do" %}selected{% endif %}>To-Do</option>
                                                             <option value="In-Progress" {% if card.status == "In-Progress" %}selected{% endif %}>In-Progress</option>
                                                             <option value="Completed" {% if card.status == "Completed" %}selected{% endif %}>Completed</option>
                                                         </select>

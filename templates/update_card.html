@@ -44,7 +44,7 @@ aria-labelledby="UpdateCardModalLabel" aria-hidden="true">
                         <label for="status" class="form-label">Status : </label>
                         <div style="display: inline-block;">
                             <select name="status" id="status-{{card.card_id}}" class="form-select mx-2" required onchange="updateCompletedStatus('{{card.card_id}}')">
-                                <option value="Not Started" {{ "selected" if card.status == "Not Started" else "" }}>Not Started</option>
+                                <option value="To-Do" {{ "selected" if card.status == "To-Do" else "" }}>To-Do</option>
                                 <option value="In-Progress" {{ "selected" if card.status == "In-Progress" else "" }}>In-Progress</option>
                                 <option value="Completed" {{ "selected" if card.status == "Completed" else "" }}>Completed</option>
                             </select>
